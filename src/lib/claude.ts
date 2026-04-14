@@ -1,8 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+let _anthropic: Anthropic | null = null;
+function getAnthropic(): Anthropic {
+  if (!_anthropic) {
+    _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  }
+  return _anthropic;
+}
 
 export interface ResumeInput {
   jobDescription: string;
@@ -20,7 +24,7 @@ export interface GeneratedResume {
 }
 
 export async function generateResume(input: ResumeInput): Promise<GeneratedResume> {
-  const message = await anthropic.messages.create({
+  const message = await getAnthropic().messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 2000,
     messages: [
@@ -91,7 +95,7 @@ export async function calculateATSScore(
     .join(" ")
     .toLowerCase();
 
-  const message = await anthropic.messages.create({
+  const message = await getAnthropic().messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 1000,
     messages: [

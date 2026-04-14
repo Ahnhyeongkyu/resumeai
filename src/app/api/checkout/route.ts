@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, PRICES } from "@/lib/stripe";
+import { getStripe, PRICES } from "@/lib/stripe";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const priceId = plan === "pro" ? PRICES.PRO_MONTHLY : PRICES.ONE_TIME;
     const mode = plan === "pro" ? "subscription" : "payment";
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: mode as "payment" | "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],

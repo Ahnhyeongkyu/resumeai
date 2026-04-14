@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 export async function POST(request: NextRequest) {
   try {
     const { sessionId, resume, template, watermark } = await request.json();
 
     if (sessionId) {
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      const session = await getStripe().checkout.sessions.retrieve(sessionId);
       if (session.payment_status !== "paid") {
         return NextResponse.json({ error: "Payment not completed" }, { status: 402 });
       }
