@@ -1,0 +1,62 @@
+export const COMPETITORS = [
+  {
+    slug: "rezi",
+    name: "Rezi",
+    tagline: "AI Resume Builder",
+    pricing: "$29/month",
+    comparison: {
+      features: [
+        { feature: "AI Resume Generation", us: true, them: true },
+        { feature: "ATS Score Check", us: true, them: true },
+        { feature: "One-Time Purchase Option", us: true, them: false },
+        { feature: "Price", usLabel: "$19 one-time", themLabel: "$29/month" },
+        { feature: "Free Preview", us: true, them: false },
+        { feature: "Job-Specific Tailoring", us: true, them: true },
+        { feature: "No Sign-up Required", us: true, them: false },
+        { feature: "Instant PDF Download", us: true, them: true },
+      ],
+      prosUs: ["70% cheaper ($19 vs $348/year)", "No subscription required", "Free preview before paying", "Instant generation in 30 seconds"],
+      prosThem: ["More template options", "LinkedIn integration", "Longer track record"],
+    },
+  },
+  {
+    slug: "resumeio",
+    name: "Resume.io",
+    tagline: "Easy Resume Builder",
+    pricing: "$24.95/month",
+    comparison: {
+      features: [
+        { feature: "AI Resume Generation", us: true, them: false },
+        { feature: "ATS Score Check", us: true, them: false },
+        { feature: "One-Time Purchase Option", us: true, them: false },
+        { feature: "Price", usLabel: "$19 one-time", themLabel: "$24.95/month" },
+        { feature: "AI-Powered Content", us: true, them: false },
+        { feature: "Template Selection", us: true, them: true },
+        { feature: "Job-Specific Tailoring", us: true, them: false },
+        { feature: "PDF Download", us: true, them: true },
+      ],
+      prosUs: ["AI generates content for you (not just templates)", "ATS score checker included", "No monthly subscription needed", "Job-specific keyword optimization"],
+      prosThem: ["30+ template designs", "Multi-language support", "Cover letter templates"],
+    },
+  },
+  {
+    slug: "kickresume",
+    name: "Kickresume",
+    tagline: "Resume & Cover Letter Builder",
+    pricing: "$19/month",
+    comparison: {
+      features: [
+        { feature: "AI Resume Generation", us: true, them: true },
+        { feature: "ATS Score Check", us: true, them: false },
+        { feature: "One-Time Purchase Option", us: true, them: false },
+        { feature: "Price", usLabel: "$19 one-time", themLabel: "$19/month" },
+        { feature: "Free Preview", us: true, them: true },
+        { feature: "Job Description Analysis", us: true, them: false },
+        { feature: "Keyword Optimization", us: true, them: false },
+        { feature: "Website Builder", us: false, them: true },
+      ],
+      prosUs: ["Same price but one-time (not monthly)", "ATS compatibility scoring", "Job description keyword matching", "30-second generation"],
+      prosThem: ["Personal website builder", "More design templates", "Cover letter builder included"],
+    },
+  },
+] as const;
