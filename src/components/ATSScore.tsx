@@ -12,11 +12,8 @@ export default function ATSScore({ score, jobTitle }: Props) {
   const color = score.score >= 80 ? "text-green-500" : score.score >= 60 ? "text-yellow-500" : "text-red-500";
   const bg = score.score >= 80 ? "bg-green-500" : score.score >= 60 ? "bg-yellow-500" : "bg-red-500";
 
-  const shareUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/share/${score.score}?job=${encodeURIComponent(jobTitle || "")}`
-    : "";
-
   const handleShare = () => {
+    const shareUrl = `${window.location.origin}/share/${score.score}?job=${encodeURIComponent(jobTitle || "")}`;
     const text = `My resume scored ${score.score}/100 on ATS! Check yours at resumeai.site`;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
     window.open(twitterUrl, "_blank");
@@ -37,7 +34,7 @@ export default function ATSScore({ score, jobTitle }: Props) {
 
       {/* Score circle */}
       <div className="flex items-center gap-6">
-        <div className="relative w-24 h-24">
+        <div className="relative w-24 h-24 shrink-0">
           <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="42" fill="none" stroke="#e5e7eb" strokeWidth="8" />
             <circle
@@ -55,7 +52,7 @@ export default function ATSScore({ score, jobTitle }: Props) {
         </div>
         <div className="flex-1">
           <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-            <div className={`h-2 rounded-full ${bg}`} style={{ width: `${score.score}%` }} />
+            <div className={`h-2 rounded-full transition-all duration-700 ${bg}`} style={{ width: `${score.score}%` }} />
           </div>
           <p className="text-sm text-gray-600">
             {score.score >= 80
@@ -66,6 +63,29 @@ export default function ATSScore({ score, jobTitle }: Props) {
           </p>
         </div>
       </div>
+
+      {/* Breakdown */}
+      {score.breakdown && (
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold text-gray-500 uppercase">Score Breakdown</h4>
+          {[
+            { label: "Keyword Match", value: score.breakdown.keywordMatch },
+            { label: "Section Structure", value: score.breakdown.sectionStructure },
+            { label: "Formatting", value: score.breakdown.formatting },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 w-28">{item.label}</span>
+              <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                <div
+                  className={`h-1.5 rounded-full ${item.value >= 80 ? "bg-green-500" : item.value >= 60 ? "bg-yellow-500" : "bg-red-500"}`}
+                  style={{ width: `${item.value}%` }}
+                />
+              </div>
+              <span className="text-xs font-medium text-gray-700 w-8 text-right">{item.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Keywords */}
       <div className="grid grid-cols-2 gap-4">
@@ -98,7 +118,7 @@ export default function ATSScore({ score, jobTitle }: Props) {
           <ul className="space-y-1">
             {score.suggestions.map((s, i) => (
               <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
-                <span className="text-blue-500 mt-0.5">+</span>
+                <span className="text-blue-500 mt-0.5 shrink-0">+</span>
                 {s}
               </li>
             ))}
