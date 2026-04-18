@@ -1,44 +1,52 @@
-import Link from "next/link";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { BLOG_POSTS } from "@/lib/blog-posts";
-import { Clock, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { blogPosts } from "@/data/blog";
 
 export const metadata: Metadata = {
-  title: "Resume Tips & Guides | ResumeAI Blog",
-  description: "Expert resume writing tips, ATS optimization guides, and career advice to help you land your dream job.",
+  title: "Resume Tips & Career Advice - ResumeAI Blog",
+  description:
+    "Expert resume writing tips, AI career advice, and ATS optimization guides. Learn how to build a resume that gets interviews in 2026.",
 };
 
 export default function BlogPage() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 max-w-4xl mx-auto px-4 py-16 w-full">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Resume Blog</h1>
-        <p className="text-gray-600 mb-10">Expert tips to help you write better resumes and land more interviews.</p>
+    <main className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-4xl px-4 py-20">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+          Resume Tips &amp; Career Advice
+        </h1>
+        <p className="mt-4 text-lg text-gray-600">
+          Practical guides to help you build a better resume and land more interviews.
+        </p>
 
-        <div className="space-y-6">
-          {BLOG_POSTS.map((post) => (
+        <div className="mt-12 space-y-6">
+          {blogPosts.map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="block bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md hover:border-blue-200 transition"
+              className="block rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition hover:border-emerald-200 hover:shadow-md"
             >
-              <h2 className="text-xl font-semibold text-gray-900">{post.title}</h2>
-              <p className="text-gray-600 text-sm mt-2">{post.description}</p>
-              <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
-                <span>{post.date}</span>
-                <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{post.readTime}</span>
-              </div>
-              <span className="mt-3 inline-flex items-center gap-1 text-sm text-blue-600 font-medium">
-                Read more <ArrowRight className="w-3 h-3" />
-              </span>
+              <article>
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <time dateTime={post.date}>
+                    {new Date(post.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </time>
+                  <span aria-hidden="true">&middot;</span>
+                  <span>{post.readTime} read</span>
+                </div>
+                <h2 className="mt-2 text-xl font-semibold text-gray-900">
+                  {post.title}
+                </h2>
+                <p className="mt-2 text-gray-600 line-clamp-2">{post.excerpt}</p>
+              </article>
             </Link>
           ))}
         </div>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </main>
   );
 }

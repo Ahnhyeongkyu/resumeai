@@ -41,3 +41,12 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# build artifacts
+bash.exe.stackdump
+lh-prod.json
+*.stackdump
+
+# claude hooks/logs (local dev)
+.claude/hooks/logs/
+.claude/hooks/logs/src/

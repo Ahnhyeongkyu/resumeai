@@ -1,168 +1,212 @@
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { JOB_TITLES } from "@/lib/jobs";
-import { ArrowRight, Check, FileText, Target, Zap } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { pseoJobs, getPseoJob } from "@/data/pseo";
+import AffiliateCards from "@/components/shared/AffiliateCards";
+import { getJobAffiliates } from "@/lib/affiliates";
 
-interface Props {
+export function generateStaticParams() {
+  return pseoJobs.map((job) => ({ "job-title": job.slug }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
   params: Promise<{ "job-title": string }>;
-}
-
-export async function generateStaticParams() {
-  return JOB_TITLES.map((job) => ({ "job-title": job.slug }));
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+}): Promise<Metadata> {
   const { "job-title": slug } = await params;
-  const job = JOB_TITLES.find((j) => j.slug === slug);
-  if (!job) return {};
+  const job = getPseoJob(slug);
+  if (!job) return { title: "Not Found" };
 
   return {
-    title: `AI Resume Builder for ${job.title} | ResumeAI`,
-    description: `Build an ATS-optimized resume for ${job.title} positions. AI tailors your resume with the right keywords: ${job.keywords.slice(0, 5).join(", ")}. Free to start.`,
-    openGraph: {
-      title: `AI Resume Builder for ${job.title}`,
-      description: `Get an ATS-optimized resume tailored for ${job.title} roles in 30 seconds.`,
-      images: [`/api/og?title=AI+Resume+for+${encodeURIComponent(job.title)}&description=ATS-optimized+in+30+seconds`],
+    title: job.metaTitle,
+    description: job.metaDescription,
+    other: {
+      "script:ld+json": JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: job.metaTitle,
+        description: job.metaDescription,
+        url: `https://resumeai.site/resume/${job.slug}`,
+        publisher: {
+          "@type": "Organization",
+          name: "ResumeAI",
+          url: "https://resumeai.site",
+        },
+      }),
     },
   };
 }
 
-export default async function JobResumePage({ params }: Props) {
+function SkillCard({ name, description }: { name: string; description: string }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
+      <p className="mt-2 text-sm text-gray-600">{description}</p>
+    </div>
+  );
+}
+
+function TipAccordion({
+  tips,
+}: {
+  tips: { title: string; content: string }[];
+}) {
+  return (
+    <div className="space-y-3">
+      {tips.map((tip, i) => (
+        <details
+          key={i}
+          className="group rounded-lg border border-gray-200 bg-white"
+          {...(i === 0 ? { open: true } : {})}
+        >
+          <summary className="flex cursor-pointer items-center justify-between px-5 py-4 text-left font-medium text-gray-900 hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
+            <span>{tip.title}</span>
+            <svg
+              className="ml-3 h-5 w-5 flex-shrink-0 text-gray-400 transition-transform duration-200 group-open:rotate-45"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </summary>
+          <div className="px-5 pb-4 text-gray-600">{tip.content}</div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
+export default async function PseoPage({
+  params,
+}: {
+  params: Promise<{ "job-title": string }>;
+}) {
   const { "job-title": slug } = await params;
-  const job = JOB_TITLES.find((j) => j.slug === slug);
+  const job = getPseoJob(slug);
+
   if (!job) notFound();
 
-  const relatedJobs = JOB_TITLES.filter((j) => j.slug !== slug).slice(0, 6);
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-
-      <main className="flex-1">
+    <main className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-4xl px-4 py-20">
         {/* Hero */}
-        <section className="bg-gradient-to-b from-gray-50 to-white pt-16 pb-20 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-block bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1 rounded-full mb-4">
-              ATS-Optimized
-            </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
-              AI Resume Builder for{" "}
-              <span className="text-blue-600">{job.title}</span>
-            </h1>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Paste any {job.title.toLowerCase()} job description. AI builds a tailored, ATS-optimized resume in 30 seconds.
-            </p>
-            <Link
-              href="/builder"
-              className="mt-8 inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-600/25"
-            >
-              Build My {job.title} Resume
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+        <section className="text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+            {job.title} Resume Builder — ATS-Optimized
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600">
+            Build a professional {job.title.toLowerCase()} resume with AI-powered content,
+            ATS-optimized formatting, and industry-specific keywords.
+          </p>
+        </section>
+
+        {/* Skills */}
+        <section className="mt-16">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Top Skills for {job.title} in 2026
+          </h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {job.skills.map((skill) => (
+              <SkillCard key={skill.name} {...skill} />
+            ))}
           </div>
         </section>
 
-        {/* Keywords section */}
-        <section className="py-16 px-4 bg-white">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">
-              Top ATS Keywords for {job.title}
-            </h2>
-            <div className="flex flex-wrap gap-3 justify-center">
-              {job.keywords.map((kw) => (
-                <span
-                  key={kw}
-                  className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium"
-                >
-                  {kw}
-                </span>
-              ))}
-            </div>
-            <p className="mt-6 text-center text-gray-600 text-sm">
-              ResumeAI automatically includes these keywords when building your {job.title.toLowerCase()} resume.
-            </p>
-          </div>
+        {/* Tips */}
+        <section className="mt-16">
+          <h2 className="mb-6 text-2xl font-bold text-gray-900">
+            Resume Writing Tips for {job.title}
+          </h2>
+          <TipAccordion tips={job.tips} />
         </section>
 
-        {/* How it works */}
-        <section className="py-16 px-4 bg-gray-50">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">
-              How to Build a {job.title} Resume
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { icon: FileText, title: "Paste the job listing", desc: `Copy any ${job.title.toLowerCase()} job description from LinkedIn, Indeed, or any job board.` },
-                { icon: Zap, title: "AI optimizes your resume", desc: `Our AI tailors your resume with ${job.title.toLowerCase()}-specific keywords, skills, and achievements.` },
-                { icon: Target, title: "Score 90+ on ATS", desc: "Get an instant ATS compatibility score and download your optimized PDF." },
-              ].map((item, i) => (
-                <div key={i} className="bg-white rounded-xl p-6 shadow-sm">
-                  <item.icon className="w-8 h-8 text-blue-600 mb-3" />
-                  <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                  <p className="text-sm text-gray-600 mt-2">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Sample resume snippet */}
-        <section className="py-16 px-4 bg-white">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">
-              Sample {job.title} Resume
-            </h2>
-            <div className="bg-gray-50 rounded-xl p-8 border border-gray-200">
-              <h3 className="font-bold text-lg text-gray-900">Professional Summary</h3>
-              <p className="text-sm text-gray-700 mt-2">
-                Results-driven {job.title} with extensive experience in {job.keywords.slice(0, 3).join(", ")}.
-                Proven track record of delivering impactful solutions and driving measurable results.
-                Skilled in {job.keywords.slice(3, 6).join(", ")} with a focus on continuous improvement.
+        {/* Sample Summary */}
+        <section className="mt-16">
+          <h2 className="mb-6 text-2xl font-bold text-gray-900">
+            Sample Professional Summary
+          </h2>
+          <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-6">
+            <p className="text-gray-600 blur-sm select-none">{job.sampleSummary}</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70">
+              <p className="text-lg font-semibold text-gray-900">
+                Build your own — it&apos;s free
               </p>
-              <h3 className="font-bold text-lg text-gray-900 mt-6">Key Skills</h3>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {job.keywords.map((kw) => (
-                  <span key={kw} className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded">
-                    <Check className="w-3 h-3 inline mr-1" />{kw}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="text-center mt-8">
               <Link
                 href="/builder"
-                className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+                className="mt-3 inline-flex items-center rounded-lg bg-emerald-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-600"
               >
-                Build yours in 30 seconds
-                <ArrowRight className="w-4 h-4" />
+                Create My Resume
               </Link>
             </div>
           </div>
         </section>
 
-        {/* Related jobs */}
-        <section className="py-16 px-4 bg-gray-50">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Other Resume Templates</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {relatedJobs.map((rj) => (
-                <Link
-                  key={rj.slug}
-                  href={`/resume/${rj.slug}`}
-                  className="px-4 py-3 bg-white rounded-lg text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition border border-gray-200"
-                >
-                  {rj.title} Resume
-                </Link>
-              ))}
-            </div>
+        {/* Keywords */}
+        <section className="mt-16">
+          <h2 className="mb-6 text-2xl font-bold text-gray-900">Must-Have Keywords</h2>
+          <div className="flex flex-wrap gap-2">
+            {job.keywords.map((keyword) => (
+              <span
+                key={keyword}
+                className="rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-700 border border-emerald-100"
+              >
+                {keyword}
+              </span>
+            ))}
           </div>
         </section>
-      </main>
 
-      <Footer />
-    </div>
+        {/* Affiliate Sidebar */}
+        <section className="mt-16">
+          <AffiliateCards
+            source={`pseo_${job.slug}`}
+            affiliates={getJobAffiliates(job.slug)}
+            title={`Resources for ${job.title}s`}
+          />
+        </section>
+
+        {/* CTA */}
+        <section className="mt-16 rounded-2xl bg-emerald-500 p-8 text-center text-white sm:p-12">
+          <h2 className="text-2xl font-bold sm:text-3xl">
+            Ready to Build Your {job.title} Resume?
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-emerald-100">
+            Our AI resume builder uses these skills and keywords to create a tailored,
+            ATS-optimized resume in minutes.
+          </p>
+          <Link
+            href="/builder"
+            className="mt-6 inline-flex items-center rounded-lg bg-white px-8 py-3 text-base font-semibold text-emerald-600 shadow-sm transition hover:bg-emerald-50"
+          >
+            Build My Resume — Free
+          </Link>
+        </section>
+
+        {/* Related Jobs */}
+        <section className="mt-16">
+          <h2 className="mb-4 text-xl font-bold text-gray-900">Related Resume Builders</h2>
+          <div className="flex flex-wrap gap-3">
+            {job.relatedJobs.map((relSlug) => {
+              const related = pseoJobs.find((j) => j.slug === relSlug);
+              if (!related) return null;
+              return (
+                <Link
+                  key={relSlug}
+                  href={`/resume/${relSlug}`}
+                  className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-emerald-300 hover:text-emerald-600"
+                >
+                  {related.title}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }

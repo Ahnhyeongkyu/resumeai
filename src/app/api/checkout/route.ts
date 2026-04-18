@@ -1,30 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getStripe, PRICES } from "@/lib/stripe";
+import { NextResponse } from 'next/server';
+import { buildCheckoutUrl } from '@/lib/gumroad';
+import { checkoutSchema } from '@/lib/validations';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const { plan, resumeData } = await request.json();
-    const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_BASE_URL || "https://resumeai.site";
+    const body = await request.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json(
+        { error: 'Invalid JSON body' },
+        { status: 400 }
+      );
+    }
 
-    const priceId = plan === "pro" ? PRICES.PRO_MONTHLY : PRICES.ONE_TIME;
-    const mode = plan === "pro" ? "subscription" : "payment";
+    const result = checkoutSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'validation_error', details: result.error.issues },
+        { status: 400 }
+      );
+    }
 
-    const session = await getStripe().checkout.sessions.create({
-      mode: mode as "payment" | "subscription",
-      payment_method_types: ["card"],
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/builder?session_id={CHECKOUT_SESSION_ID}&success=true`,
-      cancel_url: `${origin}/builder?canceled=true`,
-      metadata: {
-        resumeData: JSON.stringify(resumeData).slice(0, 500),
-      },
-    });
-
-    return NextResponse.json({ url: session.url });
+    const { resumeId, email, plan } = result.data;
+    const origin =
+      request.headers.get('origin') ||
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      process.env.NEXT_PUBLIC_URL ||
+      'http://localhost:3000';
+    const successUrl = `${origin}/builder?success=true&plan=${plan}&resumeId=${resumeId}`;
+    const url = buildCheckoutUrl(plan, email, resumeId, successUrl);
+    return NextResponse.json({ url });
   } catch (error) {
-    console.error("Checkout error:", error);
+    console.error('Checkout error:', error);
     return NextResponse.json(
-      { error: "Failed to create checkout session" },
+      { error: 'checkout_failed', message: (error as Error).message },
       { status: 500 }
     );
   }
