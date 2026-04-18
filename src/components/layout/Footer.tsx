@@ -143,8 +143,19 @@ export default function Footer() {
         </div>
 
         {/* Row 3: Copyright */}
-        <div className="border-t border-gray-800 pt-8 text-sm">
-          &copy; 2026 ResumeAI. All rights reserved.
+        <div className="border-t border-gray-800 pt-8 text-sm flex flex-col sm:flex-row sm:justify-between gap-2">
+          <span>&copy; 2026 ResumeAI. All rights reserved.</span>
+          <span>
+            Made by{' '}
+            <a
+              href="https://x.com/an_hyoung"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              @an_hyoung
+            </a>
+          </span>
         </div>
       </div>
     </footer>

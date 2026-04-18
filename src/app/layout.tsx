@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     description:
       'AI builds ATS-optimized resumes for any job. Pay once, no subscription. Free to start.',
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://resumeai.site'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://getresumeai.site'),
 };
 
 export default function RootLayout({
