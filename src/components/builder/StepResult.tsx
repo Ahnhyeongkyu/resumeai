@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import AffiliateCards from "@/components/shared/AffiliateCards";
+import ATSShareButtons from "@/components/builder/ATSShareButtons";
 import { AFFILIATES, RESULT_PANEL_AFFILIATES } from "@/lib/affiliates";
 
 /* ─── Types ─── */
@@ -148,6 +149,8 @@ export default function StepResult({
       {activeTab === "ats" && (
         <div className="space-y-6">
           <ATSGauge score={atsScore.overall} />
+
+          <ATSShareButtons score={atsScore.overall} />
 
           {/* Section bars */}
           <div className="space-y-3">
