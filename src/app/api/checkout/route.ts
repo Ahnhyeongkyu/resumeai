@@ -20,14 +20,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const { resumeId, email, plan } = result.data;
+    const { resumeId, email, plan, variant } = result.data;
     const origin =
       request.headers.get('origin') ||
       process.env.NEXT_PUBLIC_BASE_URL ||
       process.env.NEXT_PUBLIC_URL ||
       'http://localhost:3000';
-    const successUrl = `${origin}/builder?success=true&plan=${plan}&resumeId=${resumeId}`;
-    const url = buildCheckoutUrl(plan, email, resumeId, successUrl);
+    // pricing-2x A/B test (CMP-38): variant only matters for the pro plan.
+    const effectiveVariant = plan === 'pro' && variant === 'treatment'
+      ? 'treatment'
+      : 'control';
+    const successUrl = `${origin}/builder?success=true&plan=${plan}&variant=${effectiveVariant}&resumeId=${resumeId}`;
+    const url = buildCheckoutUrl(plan, email, resumeId, successUrl, effectiveVariant);
     return NextResponse.json({ url });
   } catch (error) {
     console.error('Checkout error:', error);

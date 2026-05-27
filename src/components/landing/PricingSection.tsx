@@ -1,5 +1,8 @@
+"use client";
+
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { usePricingVariant } from '@/hooks/usePricingVariant';
 
 type Feature = { text: string; included: boolean };
 
@@ -14,45 +17,47 @@ interface Plan {
   popular?: boolean;
 }
 
-const plans: Plan[] = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: '',
-    subtitle: 'Forever free',
-    features: [
-      { text: 'AI resume generation', included: true },
-      { text: 'ATS score (23 criteria)', included: true },
-      { text: 'Preview and edit', included: true },
-      { text: 'PDF download', included: false },
-      { text: 'Remove watermark', included: false },
-      { text: 'DOCX download', included: false },
-      { text: 'AI cover letter', included: false },
-      { text: '30-day access', included: false },
-    ],
-    cta: 'Start Free',
-    ctaStyle: 'outline',
-  },
-  {
-    name: 'Basic',
-    price: '$9',
-    period: 'one-time',
-    subtitle: 'No subscription',
-    popular: true,
-    features: [
-      { text: 'Everything in Free', included: true },
-      { text: 'PDF download (1 resume)', included: true },
-      { text: 'Remove watermark', included: true },
-      { text: 'DOCX download', included: false },
-      { text: 'AI cover letter', included: false },
-      { text: '30-day access', included: false },
-    ],
-    cta: 'Build My Resume',
-    ctaStyle: 'solid',
-  },
-  {
+const FREE_PLAN: Plan = {
+  name: 'Free',
+  price: '$0',
+  period: '',
+  subtitle: 'Forever free',
+  features: [
+    { text: 'AI resume generation', included: true },
+    { text: 'ATS score (23 criteria)', included: true },
+    { text: 'Preview and edit', included: true },
+    { text: 'PDF download', included: false },
+    { text: 'Remove watermark', included: false },
+    { text: 'DOCX download', included: false },
+    { text: 'AI cover letter', included: false },
+    { text: '30-day access', included: false },
+  ],
+  cta: 'Start Free',
+  ctaStyle: 'outline',
+};
+
+const BASIC_PLAN: Plan = {
+  name: 'Basic',
+  price: '$9',
+  period: 'one-time',
+  subtitle: 'No subscription',
+  popular: true,
+  features: [
+    { text: 'Everything in Free', included: true },
+    { text: 'PDF download (1 resume)', included: true },
+    { text: 'Remove watermark', included: true },
+    { text: 'DOCX download', included: false },
+    { text: 'AI cover letter', included: false },
+    { text: '30-day access', included: false },
+  ],
+  cta: 'Build My Resume',
+  ctaStyle: 'solid',
+};
+
+function buildProPlan(price: string): Plan {
+  return {
     name: 'Pro',
-    price: '$19',
+    price,
     period: 'one-time',
     subtitle: 'Best value',
     features: [
@@ -64,10 +69,13 @@ const plans: Plan[] = [
     ],
     cta: 'Go Pro',
     ctaStyle: 'outline',
-  },
-];
+  };
+}
 
 export default function PricingSection() {
+  const proVariant = usePricingVariant();
+  const plans: Plan[] = [FREE_PLAN, BASIC_PLAN, buildProPlan(proVariant.displayPrice)];
+
   return (
     <section id="pricing" className="bg-gray-50 py-16 md:py-24">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">

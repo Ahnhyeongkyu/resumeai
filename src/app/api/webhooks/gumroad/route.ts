@@ -32,19 +32,29 @@ export async function POST(request: Request) {
     const permalink = data.permalink;
     const resumeId = parseUrlParam(data, 'resume_id');
     const planFromParam = parseUrlParam(data, 'plan');
+    const variantFromParam = parseUrlParam(data, 'variant');
 
     if (!saleId || !email || !permalink) {
       return NextResponse.json({ error: 'missing_fields' }, { status: 400 });
     }
 
+    const proControl = process.env.GUMROAD_PRO_PERMALINK?.trim();
+    const proTreatment = process.env.GUMROAD_PRO_TREATMENT_PERMALINK?.trim();
+
     let plan: 'basic' | 'pro';
     if (planFromParam === 'pro' || planFromParam === 'basic') {
       plan = planFromParam;
-    } else if (permalink === process.env.GUMROAD_PRO_PERMALINK) {
+    } else if (
+      permalink === proControl ||
+      (proTreatment && permalink === proTreatment)
+    ) {
       plan = 'pro';
     } else {
       plan = 'basic';
     }
+
+    const variant: 'control' | 'treatment' =
+      variantFromParam === 'treatment' ? 'treatment' : 'control';
 
     const amount = parsePrice(data.price);
 
@@ -77,6 +87,11 @@ export async function POST(request: Request) {
       incrementStat('downloads'),
       incrementStat(`purchases_${plan}`),
       incrementStat('revenue_cents', amount),
+      // CMP-38 pricing-2x experiment: per-variant purchase counter so we can
+      // sanity-check PostHog conversion data against ground truth.
+      plan === 'pro'
+        ? incrementStat(`purchases_pro_${variant}`)
+        : Promise.resolve(),
     ]);
 
     return NextResponse.json({ received: true, paymentId: payment.id });

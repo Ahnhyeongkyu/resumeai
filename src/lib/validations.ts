@@ -48,6 +48,8 @@ export const checkoutSchema = z.object({
   resumeId: z.string().uuid(),
   email: z.string().email(),
   plan: z.enum(['basic', 'pro']),
+  // CMP-38 5/27: pricing-2x A/B experiment variant (Pro only).
+  variant: z.enum(['control', 'treatment']).optional(),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

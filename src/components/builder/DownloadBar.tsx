@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, Share2 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
+import { usePricingVariant } from "@/hooks/usePricingVariant";
 
 interface DownloadBarProps {
   atsScore: number;
@@ -24,6 +25,7 @@ export default function DownloadBar({
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const proVariant = usePricingVariant();
 
   const scoreColor =
     atsScore >= 90
@@ -67,7 +69,8 @@ export default function DownloadBar({
   const handleCheckout = async (plan: "basic" | "pro") => {
     setLoading(true);
     setErrorMsg(null);
-    trackEvent("checkout_start", { plan, resume_id: resumeId });
+    const variant = plan === "pro" ? proVariant.variant : "control";
+    trackEvent("checkout_start", { plan, resume_id: resumeId, variant });
     try {
       if (!email) {
         throw new Error("Please enter your email in Step 2 before checkout.");
@@ -75,7 +78,7 @@ export default function DownloadBar({
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeId, email, plan }),
+        body: JSON.stringify({ resumeId, email, plan, variant }),
       });
 
       if (!res.ok) {
@@ -186,7 +189,7 @@ export default function DownloadBar({
                   onClick={() => handleCheckout("pro")}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  Download PDF + DOCX — $19{" "}
+                  Download PDF + DOCX — {proVariant.label}{" "}
                   <span className="text-emerald-500 font-medium">(Pro)</span>
                 </button>
               )}

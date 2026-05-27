@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer';
 import { ToastProvider } from '@/components/shared/Toast';
 import CookieBanner from '@/components/shared/CookieBanner';
 import Analytics from '@/components/shared/Analytics';
+import PostHogInit from '@/components/shared/PostHogInit';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -42,6 +43,7 @@ export default function RootLayout({
     <html lang="en" className={plusJakartaSans.variable}>
       <body className="font-sans bg-white text-gray-900 antialiased">
         <Analytics />
+        <PostHogInit />
         <ToastProvider>
           <a
             href="#main-content"
