@@ -26,7 +26,7 @@ export const PRICING_TREATMENT: PricingVariant = {
   displayPrice: "$29",
 };
 
-const EXPERIMENT_KEY = "pricing-2x";
+const EXPERIMENT_KEY = "resumeai-price-test";
 
 /**
  * Reads the `pricing-2x` PostHog feature flag for the Pro plan A/B test
@@ -38,14 +38,14 @@ const EXPERIMENT_KEY = "pricing-2x";
  * PostHog experiment dashboard registers the exposure.
  *
  * Falls back safely (control) if PostHog is not initialised (e.g. missing
- * NEXT_PUBLIC_POSTHOG_KEY) so paid checkout never breaks.
+ * NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) so paid checkout never breaks.
  */
 export function usePricingVariant(): PricingVariant {
   const [variant, setVariant] = useState<PricingVariant>(PRICING_CONTROL);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return;
+    if (!process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) return;
 
     let captured = false;
 

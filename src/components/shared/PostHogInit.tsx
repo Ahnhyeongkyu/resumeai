@@ -7,7 +7,7 @@ import posthog from "posthog-js";
  * PostHog client-side init.
  *
  * Mounted once at the root layout. Initialises posthog-js with the public
- * project key (NEXT_PUBLIC_POSTHOG_KEY). When the key is missing the init is a
+ * project key (NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN). When the key is missing the init is a
  * no-op so local/preview builds do not crash.
  *
  * Pageviews are auto-captured. Autocapture is disabled to keep the event
@@ -18,7 +18,7 @@ export default function PostHogInit() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    const key = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
     if (!key) {
       // Silently skip in environments without a key (e.g. preview, local).
       return;
