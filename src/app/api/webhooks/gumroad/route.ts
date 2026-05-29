@@ -27,6 +27,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
 
+    // Shared Gumroad account: the account-level Ping delivers ALL sales here,
+    // including other services on the same account (e.g. trustfolio). Those sales
+    // carry a `workspace_id` passthrough that resumeai checkouts never set, and
+    // are handled by that service's own webhook. Ignore them so a trustfolio
+    // buyer never receives a spurious resumeai Pro account.
+    if (parseUrlParam(data, 'workspace_id')) {
+      return NextResponse.json({ received: true, ignored: 'foreign-product' });
+    }
+
     const saleId = data.sale_id;
     const email = data.email;
     const permalink = data.permalink;
