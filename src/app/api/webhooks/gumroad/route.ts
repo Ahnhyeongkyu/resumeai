@@ -15,11 +15,27 @@ const FORWARD_TARGETS: Record<string, string> = {
   timebox: 'https://api.timebox.ai.kr/api/webhooks/gumroad',
 };
 
-function serviceFromPermalink(permalink: string): 'resumeai' | 'trustfolio' | 'timebox' {
-  const p = (permalink || '').toLowerCase();
-  if (p.startsWith('trustfolio')) return 'trustfolio';
-  if (p.startsWith('timebox')) return 'timebox';
-  return 'resumeai';
+// ★ 라우팅 키 = Gumroad product_id (확정·불변, ping이 항상 보냄). permalink는 base(랜덤)/custom 모호 →
+//   product_id 우선, permalink prefix는 폴백. (houngster 계정 6제품 id, /v2/products에서 확인.)
+const PRODUCT_ID_SERVICE: Record<string, 'resumeai' | 'trustfolio' | 'timebox'> = {
+  'xrUbAKWqsO13oFN9CYz_ig==': 'trustfolio',
+  'FZGR678vds43En4STXhnlg==': 'timebox',  // student
+  'bjJuGSsYaCxA0lBYy_Wtig==': 'timebox',  // studio
+  '3Iw4kNmnMMLdCmr3V789zw==': 'timebox',  // pro
+  'KZCa0rVZ_xc4TgnrNtWSIg==': 'resumeai', // pro
+  'qqYpYfotFZgoSrZY7lcZ5Q==': 'resumeai', // basic
+};
+
+function serviceFromSale(data: Record<string, string>): 'resumeai' | 'trustfolio' | 'timebox' | null {
+  const pid = data.product_id || data.product_permalink_id || '';
+  if (PRODUCT_ID_SERVICE[pid]) return PRODUCT_ID_SERVICE[pid];
+  // 폴백: permalink/product_permalink prefix
+  const p = (data.permalink || data.product_permalink || '').toLowerCase();
+  if (p.includes('trustfolio')) return 'trustfolio';
+  if (p.includes('timebox')) return 'timebox';
+  if (p.includes('resumeai') || p.includes('resume')) return 'resumeai';
+  // ★ 미상이면 null — resumeai로 단정 금지(타서비스/신규 제품 구매자에 resumeai Pro 오부여 방지).
+  return null;
 }
 
 function parsePrice(priceStr: string | undefined): number {
@@ -77,7 +93,12 @@ export async function POST(request: Request) {
     }
 
     const permalink = data.permalink || data.product_permalink || '';
-    const service = serviceFromPermalink(permalink);
+    const service = serviceFromSale(data);
+
+    if (!service) {
+      console.warn('[gumroad-router] unknown product — ignored', data.product_id, permalink);
+      return NextResponse.json({ received: true, ignored: 'unknown-product', product_id: data.product_id });
+    }
 
     // === 라우팅: 타 서비스 제품은 해당 도메인 웹훅으로 포워딩(권한) + PostHog 중앙 측정 ===
     if (service !== 'resumeai') {
