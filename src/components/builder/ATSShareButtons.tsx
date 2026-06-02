@@ -12,9 +12,11 @@ export default function ATSShareButtons({ score, resumeId }: ATSShareButtonsProp
   const [copied, setCopied] = useState(false);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://getresumeai.site";
+  // 유통 측정(#스프린트): 공유 루프를 UTM 채널로 연결 → LandingTrack이 utm_source=share 캡처(PostHog).
+  const shareUtm = "utm_source=share&utm_medium=referral&utm_campaign=ats_score";
   const shareUrl = resumeId
-    ? `${baseUrl}/share/${resumeId}`
-    : `${baseUrl}?ref=ats-share`;
+    ? `${baseUrl}/share/${resumeId}?${shareUtm}`
+    : `${baseUrl}?${shareUtm}`;
 
   const shareText = `My resume scored ${score}/100 against this ATS - and I got actionable feedback on what to fix. Built with ResumeAI ($9 once, no subscription).`;
 
