@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Check, AlertCircle, RotateCcw, ArrowLeft } from "lucide-react";
 import type { FormData } from "./StepInfo";
+import { track } from "@/lib/track";
 
 interface GeneratedResume {
   summary: string;
@@ -116,6 +117,9 @@ export default function StepGenerating({
           atsScore: data.atsScore,
           resumeId: data.resumeId,
         };
+
+        // 퍼널 측정 통일 (PostHog 443488): 생성 완료.
+        track("resume_generated", { ats_score: data.atsScore?.overall ?? null });
 
         // Animate to 100%
         if (animRef.current) cancelAnimationFrame(animRef.current);

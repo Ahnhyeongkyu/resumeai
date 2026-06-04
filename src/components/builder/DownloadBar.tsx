@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, Share2 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
+import { track } from "@/lib/track";
 import { usePricingVariant } from "@/hooks/usePricingVariant";
 
 interface DownloadBarProps {
@@ -26,6 +27,11 @@ export default function DownloadBar({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const proVariant = usePricingVariant();
+
+  // 퍼널 측정 통일 (PostHog 443488): 무료 사용자에게 결제 게이트(=paywall) 노출 시점.
+  useEffect(() => {
+    if (paidPlan === "none") track("paywall_view", { resume_id: resumeId });
+  }, [paidPlan, resumeId]);
 
   const scoreColor =
     atsScore >= 90
@@ -71,6 +77,7 @@ export default function DownloadBar({
     setErrorMsg(null);
     const variant = plan === "pro" ? proVariant.variant : "control";
     trackEvent("checkout_start", { plan, resume_id: resumeId, variant });
+    track("cta_click", { cta: "checkout", plan, resume_id: resumeId, variant });
     try {
       if (!email) {
         throw new Error("Please enter your email in Step 2 before checkout.");
