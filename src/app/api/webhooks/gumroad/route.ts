@@ -137,6 +137,8 @@ export async function POST(request: Request) {
       if (service === 'timebox') {
         const isPro = permalink.toLowerCase().includes('pro') || parseUrlParam(data, 'plan') === 'pro';
         if (isPro && data.email) timeboxGrant = await grantTimeboxPro(data.email);
+        // 관측성: Vercel 로그에 grant 결과 남김(reason=granted/user_not_found/lookup_*/env_missing).
+        console.log('[gumroad-router] timebox grant', JSON.stringify({ email: data.email, permalink, isPro, grant: timeboxGrant }));
       }
       const target = FORWARD_TARGETS[service];
       let forwardStatus = 0;
