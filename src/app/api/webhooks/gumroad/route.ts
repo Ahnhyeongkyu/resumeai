@@ -77,6 +77,35 @@ async function firePaidConversion(service: string, data: Record<string, string>)
   }
 }
 
+// 회장 지시(6/5): timebox는 자체 Supabase(별도 DB). 앱이 읽는 entitlement = Supabase user
+//   app_metadata.plan (usePlan→getUser→planFromUser). api.timebox.ai.kr 포워딩은 Neon User.plan만
+//   써서 앱에 안 보임 → 라우터가 timebox Supabase Admin(service_role)로 직접 plan=pro 부여(cross-DB).
+//   env(resumeai 'app'): TIMEBOX_SUPABASE_URL + TIMEBOX_SUPABASE_SERVICE_ROLE_KEY. best-effort(실패해도 webhook 진행).
+async function grantTimeboxPro(email: string): Promise<{ ok: boolean; reason?: string }> {
+  const url = process.env.TIMEBOX_SUPABASE_URL?.replace(/\/$/, '');
+  const key = process.env.TIMEBOX_SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return { ok: false, reason: 'timebox_supabase_env_missing' };
+  if (!email) return { ok: false, reason: 'no_email' };
+  const headers = { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+  try {
+    // GoTrue admin: 이메일로 유저 조회. email 필터 미지원 버전 대비 결과에서 정확(소문자) 매칭.
+    const lookup = await fetch(`${url}/auth/v1/admin/users?per_page=200&email=${encodeURIComponent(email)}`, { headers });
+    if (!lookup.ok) return { ok: false, reason: `lookup_${lookup.status}` };
+    const body = (await lookup.json()) as { users?: Array<{ id: string; email?: string; app_metadata?: Record<string, unknown> }> };
+    const target = (body.users || []).find((u) => (u.email || '').toLowerCase() === email.toLowerCase());
+    if (!target) return { ok: false, reason: 'user_not_found' }; // 가입 전 결제 = 부여 불가(재처리 필요)
+    const app_metadata = { ...(target.app_metadata || {}), plan: 'pro' };
+    const upd = await fetch(`${url}/auth/v1/admin/users/${target.id}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ app_metadata }),
+    });
+    return { ok: upd.ok, reason: upd.ok ? 'granted' : `update_${upd.status}` };
+  } catch (e) {
+    return { ok: false, reason: (e as Error).message };
+  }
+}
+
 export async function POST(request: Request) {
   try {
     // raw body 보존(포워딩용) + 파싱
@@ -102,6 +131,13 @@ export async function POST(request: Request) {
 
     // === 라우팅: 타 서비스 제품은 해당 도메인 웹훅으로 포워딩(권한) + PostHog 중앙 측정 ===
     if (service !== 'resumeai') {
+      // 회장 지시(6/5): timebox Pro = timebox Supabase entitlement(앱이 읽는 곳) 직접 부여(cross-DB).
+      //   forward(아래·Neon 기록)와 별개·병행. best-effort(실패해도 forward/측정 진행, 멱등).
+      let timeboxGrant: { ok: boolean; reason?: string } | null = null;
+      if (service === 'timebox') {
+        const isPro = permalink.toLowerCase().includes('pro') || parseUrlParam(data, 'plan') === 'pro';
+        if (isPro && data.email) timeboxGrant = await grantTimeboxPro(data.email);
+      }
       const target = FORWARD_TARGETS[service];
       let forwardStatus = 0;
       try {
@@ -118,10 +154,10 @@ export async function POST(request: Request) {
       }
       if (forwardStatus >= 200 && forwardStatus < 300) {
         await firePaidConversion(service, data);
-        return NextResponse.json({ received: true, routed: service, forward_status: forwardStatus });
+        return NextResponse.json({ received: true, routed: service, forward_status: forwardStatus, timebox_grant: timeboxGrant });
       }
       // 타깃이 비2xx(예: 중복 401/duplicate) → 측정만 시도하고 그 상태 그대로 반영
-      return NextResponse.json({ received: true, routed: service, forward_status: forwardStatus }, { status: forwardStatus === 401 ? 200 : forwardStatus });
+      return NextResponse.json({ received: true, routed: service, forward_status: forwardStatus, timebox_grant: timeboxGrant }, { status: forwardStatus === 401 ? 200 : forwardStatus });
     }
 
     // === resumeai 제품: 로컬 권한부여(기존 로직) ===
