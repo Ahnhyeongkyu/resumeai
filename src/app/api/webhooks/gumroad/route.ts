@@ -29,8 +29,12 @@ const PRODUCT_ID_SERVICE: Record<string, 'resumeai' | 'trustfolio' | 'timebox'> 
 function serviceFromSale(data: Record<string, string>): 'resumeai' | 'trustfolio' | 'timebox' | null {
   const pid = data.product_id || data.product_permalink_id || '';
   if (PRODUCT_ID_SERVICE[pid]) return PRODUCT_ID_SERVICE[pid];
-  // 폴백: permalink/product_permalink prefix
-  const p = (data.permalink || data.product_permalink || '').toLowerCase();
+  // 폴백: permalink/product_permalink/product_name 전부 스캔(신규 제품 = product_id 맵 미등록 +
+  //   permalink가 랜덤 base일 때 누락 방지). product_name은 ping에 항상 옴(예: "timebox Pro").
+  const p = [data.permalink, data.product_permalink, data.product_name, data.short_product_id]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
   if (p.includes('trustfolio')) return 'trustfolio';
   if (p.includes('timebox')) return 'timebox';
   if (p.includes('resumeai') || p.includes('resume')) return 'resumeai';
