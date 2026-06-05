@@ -51,8 +51,14 @@ export async function rateLimit(
   if (!limiter) {
     return { success: true, limit, remaining: limit, reset: Date.now() + windowSec * 1000 };
   }
-  const r = await limiter.limit(identifier);
-  return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
+  // Upstash 장애가 핵심기능(이력서 생성)을 500시키지 않게 fail-open. 레이트리밋은 보호장치지 게이트 아님.
+  try {
+    const r = await limiter.limit(identifier);
+    return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
+  } catch (e) {
+    console.error('rateLimit check failed (fail-open):', e);
+    return { success: true, limit, remaining: limit, reset: Date.now() + windowSec * 1000 };
+  }
 }
 
 export function getClientIP(request: Request): string {
